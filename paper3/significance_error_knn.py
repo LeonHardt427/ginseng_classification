@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+# @Time    : 2018/1/17 14:49
+# @Author  : LeonHardt
+# @File    : significance_error_knn.py
+
+
+# -*- coding: utf-8 -*-
 # @Time    : 2017/12/28 9:53
 # @Author  : LeonHardt
 # @File    : bcp_classification.py
@@ -9,9 +15,7 @@ import pandas as pd
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
+
 from sklearn.neighbors import KNeighborsClassifier
 
 from nonconformist.base import ClassifierAdapter
@@ -19,7 +23,7 @@ from nonconformist.cp import IcpClassifier
 from nonconformist.nc import NcFactory, ClassifierNc
 from nonconformist.evaluation import class_avg_c, class_mean_errors
 from nonconformist.acp import BootstrapConformalClassifier
-from force_value import force_mean_errors
+
 # ----------------------------------------
 # preprocessing
 # -----------------------------------------
@@ -35,40 +39,48 @@ X = sc.fit_transform(X)
 # prediction
 # --------------------------------------------
 
-# x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1) # split sample
-
-# significance = 0.57
 summary = []
 
-simple_model = SVC(C=40, kernel='rbf', gamma=0.005, probability=True)
-model_name = 'SVM'
 
-# simple_model = RandomForestClassifier(n_estimators=12, criterion='entropy')
-# model_name = 'RandomForest'
-
-# simple_model = DecisionTreeClassifier(criterion='entropy', max_depth=6)
-# model_name = 'Tree'
-#
 # simple_model = KNeighborsClassifier(n_neighbors=3)
 # model_name = '3NN'
 
-# simple_model = KNeighborsClassifier(n_neighbors=1)
-# model_name = '1NN'
+simple_model = KNeighborsClassifier(n_neighbors=1)
+model_name = '1NN'
 
 # ------------------------------------------------------------------------------
 # prediction with significance
+framework_name = 'CP'
 error_summary = []
 for sig in np.arange(0.1, 1.0, 0.002):
-    print('sig = ' +str(sig))
+    print('sig = ' + str(sig))
     s_folder = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
     for k, (train, test) in enumerate(s_folder.split(X, y)):
         x_train, x_test = X[train], X[test]
         y_train, y_test = y[train], y[test]
         truth = y_test.reshape((-1, 1))
+        # -----------------------------------------------
+        # BCP
+        # conformal_model = BootstrapConformalClassifier(IcpClassifier(ClassifierNc(ClassifierAdapter(simple_model))))
+        # conformal_model.fit(x_train_sp, y_train_sp)
 
-        model = BootstrapConformalClassifier(IcpClassifier(ClassifierNc(ClassifierAdapter(simple_model))))
-        model.fit(x_train, y_train)
-        prediction = model.predict(x_test, significance=None)
+        # ------------------------------------------
+        # ICP
+        # x_train_sp, x_cal, y_train_sp, y_cal = train_test_split(x_train, y_train, test_size=0.3, shuffle=True,
+        #                                                         random_state=1)
+        # nc = NcFactory.create_nc(model=simple_model)
+        # conformal_model = IcpClassifier(nc)
+        # conformal_model.fit(x_train_sp, y_train_sp)
+        # conformal_model.calibrate(x_cal, y_cal)
+
+        # ---------------------------------------------------
+        # CP
+        nc = NcFactory.create_nc(model=simple_model)
+        conformal_model = IcpClassifier(nc)
+        conformal_model.fit(x_train, y_train)
+        conformal_model.calibrate(x_train, y_train)
+
+        prediction = conformal_model.predict(x_test, significance=None)
         table = np.hstack((prediction, truth))
         result = [class_mean_errors(prediction, truth, significance=sig),
                   class_avg_c(prediction, truth, significance=sig)]
@@ -90,10 +102,14 @@ for sig in np.arange(0.1, 1.0, 0.002):
     else:
         error_summary = np.vstack((error_summary, temp))
 
-save_path = os.getcwd()+'/summary/bcp/error-sign.txt'
-if os.path.exists(save_path):
-    os.remove(save_path)
-np.savetxt(save_path, error_summary, delimiter=',')
+save_path = os.getcwd()+'/summary/' + framework_name+'/'
+if os.path.exists(save_path) is not True:
+    os.makedirs(save_path)
+
+save_file = save_path + 'significance_error_'+model_name +'_'+framework_name+'.txt'
+if os.path.exists(save_file):
+    os.remove(save_file)
+np.savetxt(save_file, error_summary, delimiter=',')
     # print(df_summary)
     # print(df_summary['Accuracy'].mean())
     # print(type(df_summary['Accuracy'].mean()))
