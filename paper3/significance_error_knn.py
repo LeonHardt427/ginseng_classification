@@ -3,12 +3,6 @@
 # @Author  : LeonHardt
 # @File    : significance_error_knn.py
 
-
-# -*- coding: utf-8 -*-
-# @Time    : 2017/12/28 9:53
-# @Author  : LeonHardt
-# @File    : bcp_classification.py
-
 import os
 import numpy as np
 import pandas as pd
@@ -17,13 +11,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold
 
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 from nonconformist.base import ClassifierAdapter
 from nonconformist.cp import IcpClassifier
 from nonconformist.nc import NcFactory, ClassifierNc
 from nonconformist.evaluation import class_avg_c, class_mean_errors
 from nonconformist.acp import BootstrapConformalClassifier
-
+from force_value import force_mean_errors
 # ----------------------------------------
 # preprocessing
 # -----------------------------------------
@@ -48,11 +44,17 @@ summary = []
 simple_model = KNeighborsClassifier(n_neighbors=1)
 model_name = '1NN'
 
+# simple_model = SVC(C=40.0, gamma=0.005, probability=True)
+# model_name = "SVM"
+
+# simple_model = DecisionTreeClassifier(max_depth=12)
+# model_name = "Tree"
+framework_name = 'CP'
 # ------------------------------------------------------------------------------
 # prediction with significance
-framework_name = 'CP'
+
 error_summary = []
-for sig in np.arange(0.1, 1.0, 0.002):
+for sig in np.arange(0, 1.0001, 0.005):
     print('sig = ' + str(sig))
     s_folder = StratifiedKFold(n_splits=10, shuffle=True, random_state=1)
     for k, (train, test) in enumerate(s_folder.split(X, y)):
@@ -61,8 +63,9 @@ for sig in np.arange(0.1, 1.0, 0.002):
         truth = y_test.reshape((-1, 1))
         # -----------------------------------------------
         # BCP
-        # conformal_model = BootstrapConformalClassifier(IcpClassifier(ClassifierNc(ClassifierAdapter(simple_model))))
-        # conformal_model.fit(x_train_sp, y_train_sp)
+        # conformal_model = BootstrapConformalClassifier(IcpClassifier(ClassifierNc(ClassifierAdapter(simple_model))),
+        #                                                n_models=10)
+        # conformal_model.fit(x_train, y_train)
 
         # ------------------------------------------
         # ICP
@@ -95,14 +98,14 @@ for sig in np.arange(0.1, 1.0, 0.002):
     df_summary = pd.DataFrame(summary, columns=['Accuracy', 'Average_count'])
     temp = [sig, df_summary['Accuracy'].mean()]
 
-    if sig == 0.1:
+    if sig == 0:
         error_summary = temp
         print(error_summary)
         print(len(error_summary))
     else:
         error_summary = np.vstack((error_summary, temp))
 
-save_path = os.getcwd()+'/summary/' + framework_name+'/'
+save_path = os.getcwd()+'/summary/' + model_name+'/'
 if os.path.exists(save_path) is not True:
     os.makedirs(save_path)
 

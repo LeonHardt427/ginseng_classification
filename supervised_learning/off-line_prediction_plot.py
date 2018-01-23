@@ -81,87 +81,89 @@ def plot_decision_regions(sample, label, classifier, test_idx=None, resolution=0
 
 X_combined_std = np.vstack((X_train_std, X_test_std))
 y_combined = np.hstack((y_train, y_test))
-
-"""
-Method 1: Perceptron
-"""
-
-ppn = Perceptron(n_iter=40, eta0=0.1, random_state=0)
-ppn.fit(X_train_std, y_train)
-y_prediction = ppn.predict(X_test_std)
-misclassified_number = ((y_test != y_prediction).sum())
-ppn_accuracy = accuracy_score(y_test, y_prediction)
-print('Perceptron accuracy is ' + str(ppn_accuracy) + ' ,and ' +
-      str(misclassified_number) + 'sample(s) is misclassified')
-
-plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=ppn, test_idx=range(105, 150))
-plt.title('Perceptron')                     # Title ------Perceptron
-plt.xlabel('petal length [standardized]')
-plt.ylabel('petal length [standardized]')
-plt.legend(loc='upper left')
-plt.show()
-
-"""
-Method 2: Logistic Regression
-"""
-
-lr = LogisticRegression(C=1000, random_state=0)
-lr.fit(X_train_std, y_train)
-
-plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=lr, test_idx=range(105, 150))
-plt.title('Logistic Regression')           # Title ------- Logistic Regression
-plt.xlabel('petal length [standardized]')
-plt.ylabel('petal length [standardized]')
-plt.legend(loc='upper left')
-plt.show()
-
-"""
-Method 3: Support Vector machine (linear kernel)
-"""
-svm = SVC(kernel='linear', C=1.0, random_state=0)
-svm.fit(X_train_std, y_train)
-plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=svm, test_idx=range(105, 150))
-plt.title('Support Vector Machine (linear kernel)')           # Title ------- Support Vector Machine (linear kernel)
-plt.xlabel('petal length [standardized]')
-plt.ylabel('petal length [standardized]')
-plt.legend(loc='upper left')
-plt.show()
-
+#
+# """
+# Method 1: Perceptron
+# """
+#
+# ppn = Perceptron(n_iter=40, eta0=0.1, random_state=0)
+# ppn.fit(X_train_std, y_train)
+# y_prediction = ppn.predict(X_test_std)
+# misclassified_number = ((y_test != y_prediction).sum())
+# ppn_accuracy = accuracy_score(y_test, y_prediction)
+# print('Perceptron accuracy is ' + str(ppn_accuracy) + ' ,and ' +
+#       str(misclassified_number) + 'sample(s) is misclassified')
+#
+# plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=ppn, test_idx=range(105, 150))
+# plt.title('Perceptron')                     # Title ------Perceptron
+# plt.xlabel('petal length [standardized]')
+# plt.ylabel('petal length [standardized]')
+# plt.legend(loc='upper left')
+# plt.show()
+#
+# """
+# Method 2: Logistic Regression
+# """
+#
+# lr = LogisticRegression(C=1000, random_state=0)
+# lr.fit(X_train_std, y_train)
+#
+# plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=lr, test_idx=range(105, 150))
+# plt.title('Logistic Regression')           # Title ------- Logistic Regression
+# plt.xlabel('petal length [standardized]')
+# plt.ylabel('petal length [standardized]')
+# plt.legend(loc='upper left')
+# plt.show()
+#
+# """
+# Method 3: Support Vector machine (linear kernel)
+# """
+# svm = SVC(kernel='linear', C=1.0, random_state=0)
+# svm.fit(X_train_std, y_train)
+# plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=svm, test_idx=range(105, 150))
+# plt.title('Support Vector Machine (linear kernel)')           # Title ------- Support Vector Machine (linear kernel)
+# plt.xlabel('petal length [standardized]')
+# plt.ylabel('petal length [standardized]')
+# plt.legend(loc='upper left')
+# plt.show()
+#
+# """
+# Method 4: Support Vector machine (rbf kernel)
+# """
+svm = SVC(kernel='rbf', C=1.0, gamma=0.2, random_state=0, probability=True)
+prob = svm.fit(X_train_std, y_train).predict_proba(X_test)
+print(np.sum(prob, axis=1))
+# plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=svm, test_idx=range(105, 150))
+# plt.title('Support Vector Machine (RBF kernel)')           # Title ------- Support Vector Machine (rbf kernel)
+# plt.xlabel('petal length [standardized]')
+# plt.ylabel('petal length [standardized]')
+# plt.legend(loc='upper left')
+# plt.show()
+#
 """
 Method 4: Support Vector machine (rbf kernel)
 """
-svm = SVC(kernel='rbf', C=1.0, gamma=0.2, random_state=0)
-svm.fit(X_train_std, y_train)
-plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=svm, test_idx=range(105, 150))
-plt.title('Support Vector Machine (RBF kernel)')           # Title ------- Support Vector Machine (rbf kernel)
-plt.xlabel('petal length [standardized]')
-plt.ylabel('petal length [standardized]')
-plt.legend(loc='upper left')
-plt.show()
-
-"""
-Method 4: Support Vector machine (rbf kernel)
-"""
-tree = DecisionTreeClassifier(criterion='entropy', max_depth=3, random_state=0)
-tree.fit(X_train_std, y_train)
-plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=tree, test_idx=range(105, 150))
-plt.title('Decision Tree')           # Title ------- Decision Tree
-plt.xlabel('petal length [standardized]')
-plt.ylabel('petal length [standardized]')
-plt.legend(loc='upper left')
-plt.show()
-
-"""
-Method 5: Random Forest
-"""
-forest = RandomForestClassifier(criterion='entropy', n_estimators=10, random_state=1, n_jobs=2)
-forest.fit(X_train_std, y_train)
-plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=forest, test_idx=range(105, 150))
-plt.title('Random Forest')           # Title ------- Random Forest
-plt.xlabel('petal length [standardized]')
-plt.ylabel('petal length [standardized]')
-plt.legend(loc='upper left')
-plt.show()
-
-print(X, X.shape)
-print(y, y.shape)
+# tree = DecisionTreeClassifier(criterion='entropy', max_depth=3, random_state=0)
+# prob = tree.fit(X_train_std, y_train).predict_proba(X_test)
+# print(prob)
+# plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=tree, test_idx=range(105, 150))
+# plt.title('Decision Tree')           # Title ------- Decision Tree
+# plt.xlabel('petal length [standardized]')
+# plt.ylabel('petal length [standardized]')
+# plt.legend(loc='upper left')
+# plt.show()
+#
+# """
+# Method 5: Random Forest
+# """
+# forest = RandomForestClassifier(criterion='entropy', n_estimators=10, random_state=1, n_jobs=2)
+# forest.fit(X_train_std, y_train)
+# plot_decision_regions(sample=X_combined_std, label=y_combined, classifier=forest, test_idx=range(105, 150))
+# plt.title('Random Forest')           # Title ------- Random Forest
+# plt.xlabel('petal length [standardized]')
+# plt.ylabel('petal length [standardized]')
+# plt.legend(loc='upper left')
+# plt.show()
+#
+# print(X, X.shape)
+# print(y, y.shape)
