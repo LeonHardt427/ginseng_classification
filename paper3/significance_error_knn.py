@@ -41,15 +41,15 @@ summary = []
 # simple_model = KNeighborsClassifier(n_neighbors=3)
 # model_name = '3NN'
 
-simple_model = KNeighborsClassifier(n_neighbors=1)
-model_name = '1NN'
+# simple_model = KNeighborsClassifier(n_neighbors=1)
+# model_name = '1NN'
 
 # simple_model = SVC(C=40.0, gamma=0.005, probability=True)
 # model_name = "SVM"
 
-# simple_model = DecisionTreeClassifier(max_depth=12)
-# model_name = "Tree"
-framework_name = 'CP'
+simple_model = DecisionTreeClassifier(max_depth=12)
+model_name = "Tree"
+framework_name = 'BCP'
 # ------------------------------------------------------------------------------
 # prediction with significance
 
@@ -63,9 +63,9 @@ for sig in np.arange(0, 1.0001, 0.005):
         truth = y_test.reshape((-1, 1))
         # -----------------------------------------------
         # BCP
-        # conformal_model = BootstrapConformalClassifier(IcpClassifier(ClassifierNc(ClassifierAdapter(simple_model))),
-        #                                                n_models=10)
-        # conformal_model.fit(x_train, y_train)
+        conformal_model = BootstrapConformalClassifier(IcpClassifier(ClassifierNc(ClassifierAdapter(simple_model))),
+                                                       n_models=10)
+        conformal_model.fit(x_train, y_train)
 
         # ------------------------------------------
         # ICP
@@ -78,10 +78,10 @@ for sig in np.arange(0, 1.0001, 0.005):
 
         # ---------------------------------------------------
         # CP
-        nc = NcFactory.create_nc(model=simple_model)
-        conformal_model = IcpClassifier(nc)
-        conformal_model.fit(x_train, y_train)
-        conformal_model.calibrate(x_train, y_train)
+        # nc = NcFactory.create_nc(model=simple_model)
+        # conformal_model = IcpClassifier(nc)
+        # conformal_model.fit(x_train, y_train)
+        # conformal_model.calibrate(x_train, y_train)
 
         prediction = conformal_model.predict(x_test, significance=None)
         table = np.hstack((prediction, truth))
@@ -96,7 +96,8 @@ for sig in np.arange(0, 1.0001, 0.005):
         # print('Average count: {}'.format(result[1]))
 
     df_summary = pd.DataFrame(summary, columns=['Accuracy', 'Average_count'])
-    temp = [sig, df_summary['Accuracy'].mean()]
+    # temp = [sig, df_summary['Accuracy'].mean()]
+    temp = [sig, df_summary['Average_count'].mean()]
 
     if sig == 0:
         error_summary = temp
@@ -105,7 +106,7 @@ for sig in np.arange(0, 1.0001, 0.005):
     else:
         error_summary = np.vstack((error_summary, temp))
 
-save_path = os.getcwd()+'/summary/' + model_name+'/'
+save_path = os.getcwd()+'/summary/efficiency/' + model_name+'/'
 if os.path.exists(save_path) is not True:
     os.makedirs(save_path)
 
